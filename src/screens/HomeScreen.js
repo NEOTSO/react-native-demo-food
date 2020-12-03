@@ -1,55 +1,36 @@
-import React, { useState, useReducer } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { Text, StyleSheet, ScrollView } from "react-native";
 
 import SearchBar from "../components/SearchBar";
-import yelp from "../api/yelp";
+import ResultList from "../components/ResultList";
 
-const styles = StyleSheet.create({});
-
-const reducer = (state, action) => {
-    switch (action.type) {
-        case "search":
-            return { ...state, search: action.payload };
-        default:
-            return state;
-    }
-};
+import useResults from "../hooks/useResults";
+const styles = StyleSheet.create({
+    error: {
+        marginHorizontal: 15,
+        marginTop: 5,
+    },
+});
 
 export default HomeSreen = () => {
-    const [searching, setSeaching] = useState(false);
     const [search, setSearch] = useState("");
-    const [results, setResults] = useState([]);
-    const [errorMessage, setErrorMessage] = useState("");
-    // const [state, dispatch] = useReducer(reducer, { search: "" });
+    const [searching, onEndEditing, results, errorMessage] = useResults();
 
-    const onChangeText = (value) => {
-        console.log(value);
-        // dispatch({ type: "search", payload: value });
-        setSearch(value);
-    };
-
-    const onEndEditing = async () => {
-        try {
-            setSeaching(true);
-            const { data } = await yelp.get("/search", {
-                params: {
-                    term: search,
-                    location: "san jose",
-                },
-            });
-            setSeaching(false);
-            setResults(data.businesses);
-        } catch (err) {
-            console.log(err);
-            setErrorMessage("Something went wrong");
-        }
+    const filerResults = (filter) => {
+        return results.filter((item) => item.price === filter);
     };
 
     return (
-        <View>
-            <SearchBar onChangeText={onChangeText} onEndEditing={onEndEditing} />
-            {errorMessage !== "" && <Text>{errorMessage}</Text>}
-            <Text>{searching ? "searching, wait please." : `We have found ${results.length} results.`}</Text>
-        </View>
+        <>
+            <SearchBar value={search} onChangeText={setSearch} onEndEditing={() => onEndEditing(search)} />
+            {errorMessage !== "" && <Text style={styles.error}>{errorMessage}</Text>}
+            <Text style={styles.error}>{searching ? "searching, wait please." : `We have found ${results.length} results.`}</Text>
+            <ScrollView>
+                <ResultList title="Cost Effective" data={filerResults("$")} />
+                <ResultList title="Big Pricer" data={filerResults("$$")} />
+                <ResultList title="Big Pricer" data={filerResults("$$")} />
+                <ResultList title="Big Spender" data={filerResults("$$$")} />
+            </ScrollView>
+        </>
     );
 };
